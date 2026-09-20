@@ -2,7 +2,7 @@
 set -eu
 
 # Configuration
-REPO="${REPO:-OWNER/file-organizer}"
+REPO="${REPO:-0xNicolinux/nFiles}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 BINARY_NAME="file-organizer"
 
