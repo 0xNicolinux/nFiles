@@ -1,10 +1,11 @@
 use crate::categories::Category;
 use crate::classifier::Classifier;
+use crate::destination::{DefaultSystemDirectoryProvider, DestinationResolver, SystemDirectoryProvider};
 use crate::error::OrganizerError;
 use crate::filesystem::FilesystemHandler;
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct MoveOperation {
@@ -12,7 +13,7 @@ pub struct MoveOperation {
     pub relative_src: PathBuf,
     pub category: Category,
     pub dest_dir: PathBuf,
-    pub relative_dest_dir: PathBuf,
+    pub is_system_dest: bool,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -31,21 +32,32 @@ pub struct OrganizerOptions {
     pub recursive: bool,
     pub dry_run: bool,
     pub verbose: bool,
+    pub system_directories: bool,
 }
 
-pub struct Organizer {
+pub struct Organizer<P: SystemDirectoryProvider = DefaultSystemDirectoryProvider> {
     classifier: Classifier,
+    resolver: DestinationResolver<P>,
 }
 
-impl Default for Organizer {
+impl Default for Organizer<DefaultSystemDirectoryProvider> {
     fn default() -> Self {
-        Self::new(Classifier::default())
+        Self::new(Classifier::default(), DestinationResolver::new(false))
     }
 }
 
-impl Organizer {
-    pub fn new(classifier: Classifier) -> Self {
-        Self { classifier }
+impl Organizer<DefaultSystemDirectoryProvider> {
+    pub fn with_system_directories(use_system_dirs: bool) -> Self {
+        Self::new(
+            Classifier::default(),
+            DestinationResolver::new(use_system_dirs),
+        )
+    }
+}
+
+impl<P: SystemDirectoryProvider> Organizer<P> {
+    pub fn new(classifier: Classifier, resolver: DestinationResolver<P>) -> Self {
+        Self { classifier, resolver }
     }
 
     /// Scans the target directory and gathers all candidate files for organization.
@@ -110,21 +122,20 @@ impl Organizer {
                     }
                 } else if file_type.is_file() {
                     let category = self.classifier.classify(&path);
-                    let dest_dir = root.join(category.directory_name());
+                    let dest_dir = self.resolver.resolve(root, &category);
+                    let is_system_dest = options.system_directories && dest_dir != root.join(category.directory_name());
 
                     let relative_src = path
                         .strip_prefix(root)
                         .map(|p| p.to_path_buf())
                         .unwrap_or_else(|_| path.clone());
 
-                    let relative_dest_dir = PathBuf::from(category.directory_name());
-
                     operations.push(MoveOperation {
                         src_path: path,
                         relative_src,
                         category,
                         dest_dir,
-                        relative_dest_dir,
+                        is_system_dest,
                     });
                 }
             }
@@ -164,12 +175,22 @@ impl Organizer {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("");
-                let target_path = op.relative_dest_dir.join(file_name);
-                println!(
-                    "{:<25} -> {}",
-                    op.relative_src.display(),
-                    target_path.display()
-                );
+                let target_path = op.dest_dir.join(file_name);
+
+                if op.is_system_dest {
+                    println!(
+                        "{}\n    -> {}",
+                        op.relative_src.display(),
+                        target_path.display()
+                    );
+                } else {
+                    let rel_dest = Path::new(op.category.directory_name()).join(file_name);
+                    println!(
+                        "{:<25} -> {}",
+                        op.relative_src.display(),
+                        rel_dest.display()
+                    );
+                }
             }
             return summary;
         }
@@ -179,16 +200,15 @@ impl Organizer {
 
         for op in operations {
             // Ensure destination directory exists
-            let dest_dir = match FilesystemHandler::ensure_category_dir(&options.root_dir, &op.category) {
-                Ok(d) => d,
-                Err(err) => {
+            if !op.dest_dir.exists() {
+                if let Err(err) = fs::create_dir_all(&op.dest_dir) {
                     summary.failed += 1;
                     let msg = format!("Failed to create directory: {}", err);
                     eprintln!("Error: Permission denied / directory creation error while processing: {}\n  {}", op.src_path.display(), msg);
                     summary.errors.push((op.src_path.clone(), msg));
                     continue;
                 }
-            };
+            }
 
             // Verify safety check before moving
             if let Err(err) = FilesystemHandler::ensure_within_root(&options.root_dir, &op.src_path) {
@@ -199,15 +219,21 @@ impl Organizer {
                 continue;
             }
 
-            match FilesystemHandler::move_file(&op.src_path, &dest_dir) {
+            match FilesystemHandler::move_file(&op.src_path, &op.dest_dir) {
                 Ok(final_dest) => {
                     summary.moved += 1;
-                    let final_relative_dest = final_dest
-                        .strip_prefix(&options.root_dir)
-                        .map(|p| p.to_path_buf())
-                        .unwrap_or(final_dest);
 
-                    if options.verbose {
+                    if op.is_system_dest {
+                        println!(
+                            "✓ {:<25} → {}",
+                            op.relative_src.display(),
+                            final_dest.display()
+                        );
+                    } else if options.verbose {
+                        let final_relative_dest = final_dest
+                            .strip_prefix(&options.root_dir)
+                            .map(|p| p.to_path_buf())
+                            .unwrap_or(final_dest);
                         println!(
                             "✓ {:<25} → {} (Full path: {})",
                             op.relative_src.display(),

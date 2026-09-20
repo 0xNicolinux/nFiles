@@ -32,9 +32,10 @@ fn main() -> Result<()> {
         recursive: args.recursive,
         dry_run: args.dry_run,
         verbose: args.verbose,
+        system_directories: args.system_directories,
     };
 
-    let organizer = Organizer::default();
+    let organizer = Organizer::with_system_directories(args.system_directories);
     let operations = organizer.scan(&options)?;
 
     if operations.is_empty() {

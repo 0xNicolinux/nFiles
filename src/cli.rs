@@ -10,7 +10,7 @@ pub struct CliArgs {
     #[arg(short, long)]
     pub path: Option<PathBuf>,
 
-    /// Dry-run mode: display what would happen without moving any files
+    /// Preview operations without modifying the filesystem
     #[arg(short, long)]
     pub dry_run: bool,
 
@@ -18,13 +18,17 @@ pub struct CliArgs {
     #[arg(short, long)]
     pub recursive: bool,
 
-    /// Verbose mode: show additional technical information
+    /// Display additional technical information
     #[arg(short, long)]
     pub verbose: bool,
 
-    /// Interactive mode: force interactive prompts
+    /// Force interactive prompts
     #[arg(short, long)]
     pub interactive: bool,
+
+    /// Use platform-specific user directories
+    #[arg(short = 'S', long)]
+    pub system_directories: bool,
 }
 
 pub struct CliUserInterface;

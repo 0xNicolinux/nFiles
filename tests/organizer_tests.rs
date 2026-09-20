@@ -21,6 +21,7 @@ fn test_organizer_basic_flow() {
         recursive: false,
         dry_run: false,
         verbose: true,
+        system_directories: false,
     };
 
     let organizer = Organizer::default();
@@ -50,6 +51,7 @@ fn test_organizer_dry_run() {
         recursive: false,
         dry_run: true,
         verbose: false,
+        system_directories: false,
     };
 
     let organizer = Organizer::default();
@@ -82,6 +84,7 @@ fn test_organizer_collision_handling() {
         recursive: false,
         dry_run: false,
         verbose: false,
+        system_directories: false,
     };
 
     let organizer = Organizer::default();
@@ -114,6 +117,7 @@ fn test_organizer_recursive_and_category_dir_exclusion() {
         recursive: true,
         dry_run: false,
         verbose: true,
+        system_directories: false,
     };
 
     let organizer = Organizer::default();

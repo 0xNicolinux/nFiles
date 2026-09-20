@@ -5,6 +5,7 @@ A cross-platform command-line tool written in Rust that automatically organizes 
 ## Features
 
 - **Automatic Categorization**: Automatically categorizes files into directories such as `Images`, `Documents`, `Spreadsheets`, `Presentations`, `Audio`, `Videos`, `Archives`, `Applications`, `Code`, `DiskImages`, and `Others`.
+- **System Directories Option**: Move files directly to platform-specific user folders (e.g., Pictures, Documents, Music, Videos) using the `-S, --system-directories` flag.
 - **Collision Handling**: Automatically renames duplicate filenames (e.g., `photo (1).jpg`) to prevent accidental overwriting.
 - **Dry-Run Mode**: See exactly what files would be moved without making any changes to the filesystem.
 - **Interactive Mode**: Prompts for confirmation and displays pre-execution category summaries.
@@ -52,9 +53,9 @@ Others:         5
 Proceed? [y/N]:
 ```
 
-### 2. Basic Non-Interactive Mode
+### 2. Basic Non-Interactive Mode (Default)
 
-Organize files directly in a specified directory:
+Organize files into local category subdirectories inside the target directory:
 
 ```bash
 file-organizer --path ~/Downloads
@@ -77,7 +78,24 @@ Failed:          0
 Unrecognized:    1
 ```
 
-### 3. Dry-Run Mode
+### 3. System Directories Mode (`-S, --system-directories`)
+
+Organize files directly into OS-level user directories (e.g., Pictures, Documents, Music, Videos):
+
+```bash
+file-organizer --path ~/Downloads --system-directories
+```
+
+Category mapping when `--system-directories` is enabled:
+- `Images` → System Pictures directory
+- `Documents`, `Spreadsheets`, `Presentations` → System Documents directory
+- `Audio` → System Audio/Music directory
+- `Videos` → System Video directory
+- `Archives`, `Applications`, `Code`, `DiskImages`, `Others` → `<root>/<CategoryDir>/` (Local)
+
+*Note: If an OS system directory is unavailable, it gracefully falls back to `<root>/<CategoryDir>/`.*
+
+### 4. Dry-Run Mode
 
 Simulate organizing files without making changes to the disk:
 
@@ -85,18 +103,30 @@ Simulate organizing files without making changes to the disk:
 file-organizer --path ~/Downloads --dry-run
 ```
 
+With `--system-directories`:
+
+```bash
+file-organizer --path ~/Downloads --system-directories --dry-run
+```
+
 Output:
 ```text
 [DRY RUN]
 
-photo.jpg                 -> Images/photo.jpg
-document.pdf              -> Documents/document.pdf
-song.mp3                  -> Audio/song.mp3
-video.mp4                 -> Videos/video.mp4
-unknown.xyz               -> Others/unknown.xyz
+photo.jpg
+    -> /home/user/Pictures/photo.jpg
+
+document.pdf
+    -> /home/user/Documents/document.pdf
+
+song.mp3
+    -> /home/user/Music/song.mp3
+
+project.zip
+    -> /home/user/Downloads/Archives/project.zip
 ```
 
-### 4. Recursive Mode
+### 5. Recursive Mode
 
 Organize nested subdirectories within the selected root path:
 
@@ -104,7 +134,7 @@ Organize nested subdirectories within the selected root path:
 file-organizer --path ~/Downloads --recursive
 ```
 
-### 5. Verbose Mode
+### 6. Verbose Mode
 
 Display full destination path details for each moved file:
 
@@ -118,13 +148,14 @@ file-organizer --path ~/Downloads --verbose
 Usage: file-organizer [OPTIONS]
 
 Options:
-  -p, --path <PATH>  Path to the directory to organize
-  -d, --dry-run      Dry-run mode: display what would happen without moving any files
-  -r, --recursive    Recursively process files in subdirectories
-  -v, --verbose      Verbose mode: show additional technical information
-  -i, --interactive  Interactive mode: force interactive prompts
-  -h, --help         Print help
-  -V, --version      Print version
+  -p, --path <PATH>          Path to the directory to organize
+  -d, --dry-run              Preview operations without modifying the filesystem
+  -r, --recursive            Recursively process files in subdirectories
+  -v, --verbose              Display additional technical information
+  -i, --interactive          Force interactive prompts
+  -S, --system-directories   Use platform-specific user directories
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ## Cross-Platform Instructions
