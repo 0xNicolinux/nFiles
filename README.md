@@ -12,19 +12,52 @@ A cross-platform command-line tool written in Rust that automatically organizes 
 - **Recursive Mode**: Optionally process files in subdirectories while automatically skipping organizer destination directories (`Images/`, `Documents/`, etc.).
 - **Cross-Platform**: Fully supports Linux, macOS, and Windows with proper path and home directory expansion (`~`).
 
-## Installation & Requirements
+---
 
-### Requirements
+## Installation
 
-- [Rust](https://www.rust-lang.org/) (1.70.0 or later) and Cargo.
+End users do **not** need Rust or Cargo installed. Precompiled binaries are automatically published with each release.
 
-### Building from Source
+### One-Line Installation (Linux / macOS)
+
+Run the following command in your terminal to download and install the latest stable binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OWNER/REPOSITORY/main/install.sh | sh
+```
+
+*Note: Replace `OWNER/REPOSITORY` with your GitHub username and repository name if running from a fork.*
+
+The installer installs `file-organizer` into `~/.local/bin/file-organizer`. Make sure `~/.local/bin` is in your `PATH`.
+
+Then verify the installation:
+
+```bash
+file-organizer --help
+```
+
+### Manual Installation from GitHub Releases
+
+1. Go to the **GitHub Releases** page of this repository.
+2. Download the precompiled archive matching your system:
+   - **Linux x86_64**: `file-organizer-vX.Y.Z-x86_64-unknown-linux-gnu.tar.gz`
+   - **Linux ARM64**: `file-organizer-vX.Y.Z-aarch64-unknown-linux-gnu.tar.gz`
+   - **macOS Intel**: `file-organizer-vX.Y.Z-x86_64-apple-darwin.tar.gz`
+   - **macOS Apple Silicon**: `file-organizer-vX.Y.Z-aarch64-apple-darwin.tar.gz`
+   - **Windows x86_64**: `file-organizer-vX.Y.Z-x86_64-pc-windows-msvc.zip`
+3. Extract the archive and move the binary to a directory in your system `PATH` (e.g., `/usr/local/bin` or `C:\Program Files`).
+
+### Building from Source (Developers)
+
+If you have Rust and Cargo installed, you can build from source:
 
 ```bash
 cargo build --release
 ```
 
-The compiled binary will be located at `target/release/file-organizer` (or `file-organizer.exe` on Windows).
+The compiled binary will be located at `target/release/file-organizer` (or `target/release/file-organizer.exe` on Windows).
+
+---
 
 ## Usage Examples
 
@@ -156,32 +189,6 @@ Options:
   -S, --system-directories   Use platform-specific user directories
   -h, --help                 Print help
   -V, --version              Print version
-```
-
-## Cross-Platform Instructions
-
-### Linux
-
-Build and run:
-```bash
-cargo build --release
-./target/release/file-organizer --path ~/Downloads
-```
-
-### macOS
-
-Build and run:
-```bash
-cargo build --release
-./target/release/file-organizer --path ~/Downloads
-```
-
-### Windows (PowerShell / Command Prompt)
-
-Build and run:
-```powershell
-cargo build --release
-.\target\release\file-organizer.exe --path C:\Users\YourName\Downloads
 ```
 
 ## Running Tests
